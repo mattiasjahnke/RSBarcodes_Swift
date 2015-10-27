@@ -23,49 +23,18 @@ public class RSUnifiedCodeGenerator: RSCodeGenerator {
     // MARK: RSCodeGenerator
     
     public func generateCode(contents: String, machineReadableCodeObjectType: String) -> UIImage? {
-        var codeGenerator: RSCodeGenerator?
+        
         switch machineReadableCodeObjectType {
         case AVMetadataObjectTypeQRCode, AVMetadataObjectTypePDF417Code, AVMetadataObjectTypeAztecCode:
             return RSAbstractCodeGenerator.generateCode(contents, filterName: RSAbstractCodeGenerator.filterName(machineReadableCodeObjectType))
-        case AVMetadataObjectTypeCode39Code:
-            codeGenerator = RSCode39Generator()
-        case AVMetadataObjectTypeCode39Mod43Code:
-            codeGenerator = RSCode39Mod43Generator()
-        case AVMetadataObjectTypeEAN8Code:
-            codeGenerator = RSEAN8Generator()
-        case AVMetadataObjectTypeEAN13Code:
-            codeGenerator = RSEAN13Generator()
-        case AVMetadataObjectTypeInterleaved2of5Code:
-            codeGenerator = RSITFGenerator()
-        case AVMetadataObjectTypeITF14Code:
-            codeGenerator = RSITF14Generator()
-        case AVMetadataObjectTypeUPCECode:
-            codeGenerator = RSUPCEGenerator()
-        case AVMetadataObjectTypeCode93Code:
-            codeGenerator = RSCode93Generator()
-            // iOS 8 included, but my implementation's performance is better :)
-        case AVMetadataObjectTypeCode128Code:
-            if self.isBuiltInCode128GeneratorSelected {
-                return RSAbstractCodeGenerator.generateCode(contents, filterName: RSAbstractCodeGenerator.filterName(machineReadableCodeObjectType))
-            } else {
-                codeGenerator = RSCode128Generator()
-            }
-        case AVMetadataObjectTypeDataMatrixCode:
-            codeGenerator = RSCodeDataMatrixGenerator()
-        case RSBarcodesTypeISBN13Code:
-            codeGenerator = RSISBN13Generator()
-        case RSBarcodesTypeISSN13Code:
-            codeGenerator = RSISSN13Generator()
-        case RSBarcodesTypeExtendedCode39Code:
-            codeGenerator = RSExtendedCode39Generator()
         default:
-            print("No code generator selected.")
+            break
         }
         
-        if codeGenerator != nil {
-            codeGenerator!.fillColor = self.fillColor
-            codeGenerator!.strokeColor = self.strokeColor
-            return codeGenerator!.generateCode(contents, machineReadableCodeObjectType: machineReadableCodeObjectType)
+        if let codeGenerator = codeGeneratorForMachineReadableCodeObjectType(machineReadableCodeObjectType) {
+            codeGenerator.fillColor = fillColor
+            codeGenerator.strokeColor = strokeColor
+            return codeGenerator.generateCode(contents, machineReadableCodeObjectType: machineReadableCodeObjectType)
         } else {
             return nil
         }
@@ -73,6 +42,49 @@ public class RSUnifiedCodeGenerator: RSCodeGenerator {
     
     public func generateCode(machineReadableCodeObject: AVMetadataMachineReadableCodeObject) -> UIImage? {
         return self.generateCode(machineReadableCodeObject.stringValue, machineReadableCodeObjectType: machineReadableCodeObject.type)
+    }
+    
+    public func canGenerateCode(contents: String, machineReadableCodeObjectType: String) -> Bool {
+        switch machineReadableCodeObjectType {
+        case AVMetadataObjectTypeQRCode, AVMetadataObjectTypePDF417Code, AVMetadataObjectTypeAztecCode:
+            return true
+        default:
+            guard let generator = codeGeneratorForMachineReadableCodeObjectType(machineReadableCodeObjectType) else {
+                return false
+            }
+            return generator.isValid(contents)
+        }
+    }
+    
+    private func codeGeneratorForMachineReadableCodeObjectType(machineReadableCodeObjectType: String) -> RSAbstractCodeGenerator? {
+        switch machineReadableCodeObjectType {
+        case AVMetadataObjectTypeCode39Code:
+            return RSCode39Generator()
+        case AVMetadataObjectTypeCode39Mod43Code:
+            return RSCode39Mod43Generator()
+        case AVMetadataObjectTypeEAN8Code:
+            return RSEAN8Generator()
+        case AVMetadataObjectTypeEAN13Code:
+            return RSEAN13Generator()
+        case AVMetadataObjectTypeInterleaved2of5Code:
+            return RSITFGenerator()
+        case AVMetadataObjectTypeITF14Code:
+            return RSITF14Generator()
+        case AVMetadataObjectTypeUPCECode:
+            return RSUPCEGenerator()
+        case AVMetadataObjectTypeCode93Code:
+            return RSCode93Generator()
+        case AVMetadataObjectTypeCode128Code:
+            return RSCode128Generator()
+        case RSBarcodesTypeISBN13Code:
+            return RSISBN13Generator()
+        case RSBarcodesTypeISSN13Code:
+            return RSISSN13Generator()
+        case RSBarcodesTypeExtendedCode39Code:
+            return RSExtendedCode39Generator()
+        default:
+            return nil
+        }
     }
 }
 
